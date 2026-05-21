@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Live Counter</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 100%; height: 100%;
+    background: #080808;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    user-select: none;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 64px 64px;
+    pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    top: 40%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 700px; height: 400px;
+    background: radial-gradient(ellipse, rgba(255,50,50,0.07) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .stage {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 1;
+  }
+
+  /* live badge */
+  .live-badge {
+    display: flex; align-items: center; gap: 7px;
+    background: #e03030;
+    color: #fff;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 2.5px; text-transform: uppercase;
+    padding: 5px 13px; border-radius: 4px;
+    margin-bottom: 22px;
+    box-shadow: 0 0 18px rgba(220,50,50,0.35);
+    animation: pulseBadge 2.2s ease-in-out infinite;
+    transition: opacity 0.3s, transform 0.3s;
+  }
+  .live-badge.hidden { opacity: 0; pointer-events: none; transform: scale(0.85); }
+  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: blink 1.3s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+  @keyframes pulseBadge { 0%,100%{box-shadow:0 0 12px rgba(220,50,50,0.3)} 50%{box-shadow:0 0 28px rgba(220,50,50,0.55)} }
+
+  /* title */
+  .title-wrap { margin-bottom: 36px; }
+  #titleDisplay {
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(28px, 5.5vw, 58px);
+    letter-spacing: 1px;
+    font-weight: 600;
+    text-transform: none;
+    color: rgba(255,255,255,0.85);
+    line-height: 1; text-align: center;
+  }
+
+  /* counter row */
+  .counter-wrap {
+    display: flex; align-items: center;
+  }
+
+  /* ── DIGIT SLOT ── */
+  .digit-slot {
+    position: relative;
+    overflow: hidden;
+    /* height = font-size * line-height, set in JS */
+  }
+
+  /* The tape: holds [prev, current] stacked vertically.
+     We translate it so only one digit is visible at a time.
+     Resting position: translateY(-50%) shows the BOTTOM item (current).
+     We animate from translateY(0) → translateY(-50%) for an upward roll. */
+  .digit-tape {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(88px, 15.5vw, 172px);
+    line-height: 1;
+    color: #fff;
+    /* will-change: transform; */
+  }
+  .digit-tape span {
+    display: block;
+    text-align: center;
+    line-height: 1;
+  }
+
+  /* smooth upward roll */
+  .digit-slot.animating .digit-tape {
+    animation: rollUp var(--dur, 0.55s) cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  @keyframes rollUp {
+    from { transform: translateY(0); }
+    to   { transform: translateY(-50%); }
+  }
+
+  /* comma separator */
+  .comma {
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(54px, 10vw, 110px);
+    color: rgba(255,255,255,0.25);
+    line-height: 1;
+    align-self: center;
+    margin: 0 3px;
+    padding-bottom: 2px;
+  }
+
+  /* gear button */
+  .gear-btn {
+    position: fixed; bottom: 24px; right: 24px;
+    width: 42px; height: 42px; border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.4);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 100;
+    transition: background 0.2s, color 0.2s, transform 0.35s;
+  }
+  .gear-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  .gear-btn.open { transform: rotate(60deg); color: #e03030; }
+  .gear-btn svg { width: 19px; height: 19px; }
+
+  /* panel */
+  .panel {
+    position: fixed; bottom: 76px; right: 24px;
+    width: 300px;
+    background: #151515;
+    border: 0.5px solid rgba(255,255,255,0.09);
+    border-radius: 14px; padding: 18px;
+    z-index: 99;
+    opacity: 0; pointer-events: none;
+    transform: scale(0.9) translateY(10px);
+    transform-origin: bottom right;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .panel.open { opacity: 1; pointer-events: all; transform: scale(1) translateY(0); }
+  .panel-title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 14px; font-weight: 500; }
+
+  .field { margin-bottom: 12px; }
+  .field label { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: rgba(255,255,255,0.45); margin-bottom: 5px; }
+  .field label b { color: #fff; font-weight: 500; }
+
+  input[type=text], input[type=number] {
+    width: 100%; padding: 7px 10px;
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(255,255,255,0.1);
+    border-radius: 8px; color: #fff; font-size: 14px;
+    outline: none; font-family: 'Inter', sans-serif;
+  }
+  input[type=text]:focus, input[type=number]:focus { border-color: #e03030; }
+
+  input[type=range] {
+    width: 100%; -webkit-appearance: none; appearance: none;
+    height: 3px; border-radius: 2px;
+    background: rgba(255,255,255,0.1); outline: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px;
+    border-radius: 50%; background: #e03030; cursor: pointer;
+  }
+
+  /* toggle */
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .toggle-row span { font-size: 12px; color: rgba(255,255,255,0.45); }
+  .toggle { position: relative; width: 38px; height: 22px; flex-shrink: 0; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-track { position: absolute; inset: 0; background: rgba(255,255,255,0.1); border-radius: 22px; cursor: pointer; transition: background 0.2s; border: 0.5px solid rgba(255,255,255,0.12); }
+  .toggle input:checked + .toggle-track { background: #e03030; }
+  .toggle-track::after { content: ''; position: absolute; top: 3px; left: 3px; width: 15px; height: 15px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
+  .toggle input:checked + .toggle-track::after { transform: translateX(16px); }
+
+  hr { border: none; border-top: 0.5px solid rgba(255,255,255,0.07); margin: 12px 0; }
+  .apply { width: 100%; padding: 9px; background: #e03030; border: none; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 500; cursor: pointer; letter-spacing: 0.3px; transition: opacity 0.15s; }
+  .apply:hover { opacity: 0.85; }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="live-badge" id="liveBadge"><div class="live-dot"></div>Live</div>
+  <div class="title-wrap"><div id="titleDisplay">Title Here</div></div>
+  <div class="counter-wrap" id="counterWrap"></div>
+</div>
+
+<button class="gear-btn" id="gearBtn" aria-label="Settings">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+</button>
+
+<div class="panel" id="panel">
+  <div class="panel-title">Settings</div>
+  <div class="field">
+    <label>Title</label>
+    <input type="text" id="titleI" value="Title Here" maxlength="40" spellcheck="false" placeholder="Apna title likho..." />
+  </div>
+  <div class="toggle-row">
+    <span>LIVE badge dikhao</span>
+    <label class="toggle">
+      <input type="checkbox" id="liveToggle" checked />
+      <div class="toggle-track"></div>
+    </label>
+  </div>
+  <hr />
+  <div class="field">
+    <label>Shuru ka number <b id="startD">0</b></label>
+    <input type="number" id="startI" value="0" step="1" />
+  </div>
+  <div class="field">
+    <label>Speed (seconds) <b id="speedD">1.0s</b></label>
+    <input type="range" id="speedI" min="0.1" max="10" step="0.1" value="1" />
+  </div>
+  <div class="field">
+    <label>Min increment <b id="minD">1</b></label>
+    <input type="range" id="minI" min="1" max="1000" step="1" value="1" />
+  </div>
+  <div class="field">
+    <label>Max increment <b id="maxD">5</b></label>
+    <input type="range" id="maxI" min="1" max="1000" step="1" value="5" />
+  </div>
+  <hr />
+  <div style="display:flex;gap:8px;">
+    <button class="apply" id="applyBtn" style="flex:1;">Apply</button>
+    <button class="apply" id="resetBtn" style="flex:1;background:rgba(255,255,255,0.08);border:0.5px solid rgba(255,255,255,0.12);">Reset</button>
+  </div>
+</div>
+
+<script>
+  // ── config & state ──
+  let cfg = { start: 0, speed: 1000, min: 1, max: 5 };
+  let current = 0, target = 0;
+  let ticker = null;
+
+  // Each slot: { wrapper (div.digit-slot), tape (div.digit-tape), topSpan, botSpan, shown (char), busy }
+  let slots = [];
+  const wrap = document.getElementById('counterWrap');
+
+  const FONT_SIZE_VW = 15.5;
+  const FONT_SIZE_PX_MIN = 88;
+  const FONT_SIZE_PX_MAX = 172;
+  const ANIM_DUR = 520; // ms
+
+  function getFontSize() {
+    const vw = Math.min(Math.max(window.innerWidth * FONT_SIZE_VW / 100, FONT_SIZE_PX_MIN), FONT_SIZE_PX_MAX);
+    return vw;
+  }
+
+  // ── build N slots ──
+  function buildSlots(n) {
+    wrap.innerHTML = ''; slots = [];
+    const fs = getFontSize();
+    for (let i = 0; i < n; i++) {
+      // comma before every group of 3 from right, not at start
+      if (i > 0 && (n - i) % 3 === 0) {
+        const c = document.createElement('div');
+        c.className = 'comma'; c.textContent = ',';
+        wrap.appendChild(c);
+      }
+      const wrapper = document.createElement('div');
+      wrapper.className = 'digit-slot';
+      wrapper.style.width  = (fs * 0.62) + 'px';
+      wrapper.style.height = fs + 'px';
+
+      const tape = document.createElement('div');
+      tape.className = 'digit-tape';
+      tape.style.setProperty('--dur', ANIM_DUR + 'ms');
+
+      const topSpan = document.createElement('span');
+      topSpan.textContent = '0';
+      const botSpan = document.createElement('span');
+      botSpan.textContent = '0';
+
+      tape.appendChild(topSpan);
+      tape.appendChild(botSpan);
+
+      // tape height = 2 × font-size; start showing bottom (current)
+      // So translateY(-50%) shows botSpan
+      tape.style.transform = 'translateY(-50%)';
+
+      wrapper.appendChild(tape);
+      wrap.appendChild(wrapper);
+      slots.push({ wrapper, tape, topSpan, botSpan, shown: '0', busy: false });
+    }
+  }
+
+  // ── set all digits instantly (no anim) ──
+  function renderStatic(val) {
+    const s = String(Math.max(0, Math.round(val)));
+    const needed = Math.max(s.length, 1);
+    if (needed !== slots.length) buildSlots(needed);
+    const padded = s.padStart(slots.length, '0');
+    slots.forEach((sl, i) => {
+      sl.topSpan.textContent = padded[i];
+      sl.botSpan.textContent = padded[i];
+      sl.tape.style.transition = 'none';
+      sl.tape.style.transform  = 'translateY(-50%)';
+      sl.shown = padded[i];
+      sl.busy  = false;
+    });
+  }
+
+  // ── animate one digit from oldCh → newCh (bottom-to-top scroll) ──
+  function animateDigit(sl, newCh) {
+    if (sl.busy) {
+      // still animating — just snap and queue
+      sl.tape.style.transition = 'none';
+      sl.tape.style.transform  = 'translateY(-50%)';
+      sl.botSpan.textContent   = newCh;
+      sl.topSpan.textContent   = newCh;
+      sl.shown = newCh; sl.busy = false;
+      return;
+    }
+    // top = old (currently shown), bot = new (coming from below)
+    sl.topSpan.textContent = sl.shown;
+    sl.botSpan.textContent = newCh;
+
+    // reset tape to show top (old digit visible)
+    sl.tape.style.transition = 'none';
+    sl.tape.style.transform  = 'translateY(0%)';
+
+    // force reflow then animate up to show bottom (new digit)
+    void sl.tape.offsetWidth;
+    sl.busy = true;
+    sl.tape.style.transition = `transform ${ANIM_DUR}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+    sl.tape.style.transform  = 'translateY(-50%)';
+
+    sl.tape.addEventListener('transitionend', () => {
+      sl.shown = newCh;
+      sl.busy  = false;
+      sl.topSpan.textContent = newCh; // keep in sync
+    }, { once: true });
+  }
+
+  // ── update all slots to new value ──
+  function updateTo(newVal) {
+    const newStr = String(Math.max(0, Math.round(newVal)));
+    const needed = Math.max(newStr.length, 1);
+
+    if (needed > slots.length) {
+      // need more slots — rebuild and re-render current, then recurse
+      const savedCurrent = current;
+      buildSlots(needed);
+      renderStatic(savedCurrent);
+      updateTo(newVal);
+      return;
+    }
+
+    const padded = newStr.padStart(slots.length, '0');
+    slots.forEach((sl, i) => {
+      if (padded[i] !== sl.shown) {
+        animateDigit(sl, padded[i]);
+      }
+    });
+    current = newVal;
+  }
+
+  // ── ticker ──
+  function startCounter() {
+    if (ticker) clearInterval(ticker);
+    ticker = setInterval(() => {
+      const inc = Math.round(cfg.min + Math.random() * (cfg.max - cfg.min));
+      target += inc;
+      updateTo(target);
+    }, cfg.speed);
+  }
+
+  function init() {
+    if (ticker) clearInterval(ticker);
+    current = cfg.start; target = cfg.start;
+    renderStatic(cfg.start);
+    startCounter();
+  }
+
+  // boot
+  buildSlots(1); renderStatic(0);
+
+  // ── panel ──
+  const gearBtn    = document.getElementById('gearBtn');
+  const panel      = document.getElementById('panel');
+  const liveBadge  = document.getElementById('liveBadge');
+  const titleDisp  = document.getElementById('titleDisplay');
+  const liveToggle = document.getElementById('liveToggle');
+  let pOpen = false;
+
+  gearBtn.addEventListener('click', () => {
+    pOpen = !pOpen;
+    panel.classList.toggle('open', pOpen);
+    gearBtn.classList.toggle('open', pOpen);
+  });
+  document.addEventListener('click', e => {
+    if (pOpen && !panel.contains(e.target) && !gearBtn.contains(e.target)) {
+      pOpen = false; panel.classList.remove('open'); gearBtn.classList.remove('open');
+    }
+  });
+
+  liveToggle.addEventListener('change', () => {
+    liveBadge.classList.toggle('hidden', !liveToggle.checked);
+  });
+
+  const speedI = document.getElementById('speedI');
+  const minI   = document.getElementById('minI');
+  const maxI   = document.getElementById('maxI');
+  const startI = document.getElementById('startI');
+
+  speedI.addEventListener('input', () => { document.getElementById('speedD').textContent = parseFloat(speedI.value).toFixed(1) + 's'; });
+  minI.addEventListener('input', () => {
+    document.getElementById('minD').textContent = minI.value;
+    if (+maxI.value < +minI.value) { maxI.value = minI.value; document.getElementById('maxD').textContent = minI.value; }
+  });
+  maxI.addEventListener('input', () => {
+    document.getElementById('maxD').textContent = maxI.value;
+    if (+minI.value > +maxI.value) { minI.value = maxI.value; document.getElementById('minD').textContent = maxI.value; }
+  });
+  startI.addEventListener('input', () => { document.getElementById('startD').textContent = startI.value; });
+
+  function applySettings() {
+    const t = document.getElementById('titleI').value.trim() || 'Title Here';
+    titleDisp.textContent = t;
+    document.title = t + ' — Live Counter';
+    liveBadge.classList.toggle('hidden', !liveToggle.checked);
+    cfg.start = parseInt(startI.value) || 0;
+    cfg.speed = Math.round(parseFloat(speedI.value) * 1000);
+    cfg.min   = parseInt(minI.value);
+    cfg.max   = Math.max(parseInt(maxI.value), cfg.min);
+    pOpen = false; panel.classList.remove('open'); gearBtn.classList.remove('open');
+  }
+
+  // Apply — update speed/min/max on running counter, no restart
+  document.getElementById('applyBtn').addEventListener('click', () => {
+    applySettings();
+    // restart ticker with new speed but keep current count
+    if (ticker) clearInterval(ticker);
+    target = current;
+    startCounter();
+  });
+
+  // Reset — apply settings AND restart from start number
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    applySettings();
+    init();
+  });
+
+  window.addEventListener('resize', () => {
+    const val = current;
+    const n = slots.length;
+    buildSlots(n);
+    renderStatic(val);
+    current = val; target = val;
+  });
+</script>
+</body>
+</html>

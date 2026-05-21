@@ -61,16 +61,28 @@
     width: 100%; height: 100%; top: 50%;
   }
   body.light-mode {
-    --page-bg: #f7f7f7;
+    --page-bg: #f5f5f5;
     --panel-bg: #ffffff;
-    --field-bg: rgba(0,0,0,0.04);
-    --field-border: rgba(0,0,0,0.12);
+    --field-bg: rgba(0,0,0,0.045);
+    --field-border: rgba(0,0,0,0.14);
     --text-main: #111111;
-    --text-muted: rgba(0,0,0,0.55);
+    --text-muted: rgba(0,0,0,0.58);
     --title-color: #111111;
     --digit-color: #111111;
     --comma-color: rgba(0,0,0,0.28);
-    --grid-opacity: 0.6;
+    --grid-opacity: 1;
+  }
+  body.light-mode::before {
+    background-image:
+      linear-gradient(rgba(0,0,0,0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.045) 1px, transparent 1px),
+      var(--bg-image);
+  }
+  body.light-mode::after {
+    background: radial-gradient(ellipse, rgba(220,40,40,0.08) 0%, transparent 70%);
+  }
+  body.light-mode.has-bg::after {
+    background: rgba(255,255,255,0.25);
   }
   body::after {
     content: ''; position: fixed; top: 40%; left: 50%;
@@ -162,13 +174,22 @@
   .gear-btn svg { width: 19px; height: 19px; }
 
   .panel {
-    position: fixed; bottom: 76px; right: 24px; width: 300px;
-    background: var(--panel-bg); border: 0.5px solid rgba(255,255,255,0.09);
+    position: fixed; bottom: 76px; right: 24px; width: 320px;
+    max-height: min(78vh, 640px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: var(--panel-bg);
+    border: 0.5px solid var(--field-border);
     border-radius: 14px; padding: 18px; z-index: 99;
     opacity: 0; pointer-events: none;
     transform: scale(0.9) translateY(10px); transform-origin: bottom right;
     transition: opacity 0.2s, transform 0.2s;
+    scrollbar-width: thin;
+    scrollbar-color: #e03030 transparent;
   }
+  .panel::-webkit-scrollbar { width: 6px; }
+  .panel::-webkit-scrollbar-track { background: transparent; }
+  .panel::-webkit-scrollbar-thumb { background: #e03030; border-radius: 10px; }
   .panel.open { opacity: 1; pointer-events: all; transform: scale(1) translateY(0); }
   .panel-title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 14px; font-weight: 500; }
   .field { margin-bottom: 12px; }
@@ -178,7 +199,7 @@
     width: 100%; padding: 7px 10px;
     background: var(--field-bg);
     border: 0.5px solid var(--field-border);
-    border-radius: 8px; color: #fff; font-size: 14px;
+    border-radius: 8px; color: var(--text-main); font-size: 14px;
     outline: none; font-family: 'Inter', sans-serif;
   }
   
@@ -188,7 +209,7 @@
     width: 100%; padding: 7px 10px;
     background: var(--field-bg);
     border: 0.5px solid var(--field-border);
-    border-radius: 8px; color: #fff; font-size: 14px;
+    border-radius: 8px; color: var(--text-main); font-size: 14px;
     outline: none; font-family: 'Inter', sans-serif;
   }
 
@@ -254,6 +275,30 @@
   .small-btn:hover { opacity: 0.85; }
   body.light-mode .gear-btn { color: rgba(0,0,0,0.45); background: rgba(0,0,0,0.05); }
   body.light-mode .reset-btn, body.light-mode .small-btn { background: rgba(0,0,0,0.06); }
+
+
+  .theme-switch-row {
+    display: flex; gap: 8px;
+    background: var(--field-bg);
+    border: 0.5px solid var(--field-border);
+    border-radius: 10px;
+    padding: 4px;
+  }
+  .theme-btn {
+    flex: 1;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 10px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 12px;
+  }
+  .theme-btn.active {
+    background: #e03030;
+    color: #fff;
+  }
 
 </style>
 </head>
@@ -335,12 +380,13 @@
     <input type="file" id="bgImageI" accept="image/*" />
   </div>
 
-  <div class="toggle-row">
-    <span>Light mode</span>
-    <label class="toggle">
-      <input type="checkbox" id="modeToggle" />
-      <div class="toggle-track"></div>
-    </label>
+  <div class="field">
+    <label>Theme Mode</label>
+    <div class="theme-switch-row">
+      <button class="theme-btn active" id="darkModeBtn" type="button">Dark</button>
+      <button class="theme-btn" id="lightModeBtn" type="button">Light</button>
+    </div>
+    <input type="checkbox" id="modeToggle" style="display:none;" />
   </div>
 
   <div class="field">
@@ -577,6 +623,8 @@ const titleColorI = document.getElementById('titleColorI');
 const digitColorI = document.getElementById('digitColorI');
 const bgImageI = document.getElementById('bgImageI');
 const modeToggle = document.getElementById('modeToggle');
+const darkModeBtn = document.getElementById('darkModeBtn');
+const lightModeBtn = document.getElementById('lightModeBtn');
 const clearBgBtn = document.getElementById('clearBgBtn');
 const STORAGE_KEY = 'rr_live_counter_settings_v2';
 
@@ -621,6 +669,10 @@ function applyVisualSettings(save = true) {
   document.getElementById('liveSizeD').textContent = liveSizeI.value + 'x';
 
   document.body.classList.toggle('light-mode', modeToggle.checked);
+  if (darkModeBtn && lightModeBtn) {
+    darkModeBtn.classList.toggle('active', !modeToggle.checked);
+    lightModeBtn.classList.toggle('active', modeToggle.checked);
+  }
 
   const bg = localStorage.getItem(STORAGE_KEY + '_bg');
   if (bg) {
@@ -672,6 +724,7 @@ function defaultSettings() {
   digitColorI.value = '#ffffff';
   modeToggle.checked = false;
 
+  document.body.classList.remove('light-mode');
   applyVisualSettings(false);
   cfg = { start: 0, speed: 1000, min: 1, max: 5 };
   document.getElementById('startI').value = 0;

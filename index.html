@@ -1,10 +1,67 @@
+ChatGPT
+
+
+
+
+
+
+
+
+
+
+Pasted text.txt
+Document
+
+Pasted text (2).txt
+Document
+dekho isme 2nd file me jo counting ka pura code hai vo code muje 1st file me chahie to esa karke do 
+
+Main goal: 2nd file ka live subscriber/counting engine 1st file ke design me merge karke ek updated HTML file bana deta hu, taaki 1st layout rahe aur counting behavior 2nd wala aa jaye.
+
+Thought for 58s
+Done. 2nd file ka counting engine 1st file me merge kar diya.
+
+Updated HTML download karo
+
+
+
+
+abhi isme title ki length max 40 character hai use badhake 100 kar do aur font small big karne ka option bhi chahie isme aur google fonts isme aa jaye jise me style changekar saku yani ki poppins montserrat fonts vagera jo set karne ho vo kar saku digit & title me esa chahie
+
+Updated ✅
+Ab isme:
+
+Title limit 100 characters kar di
+
+Title font size control add kar diya
+
+Digit font size control add kar diya
+
+Google Fonts selector add kiya:
+
+Poppins
+
+Montserrat
+
+Oswald
+
+Inter
+
+Roboto
+
+Title & digits dono ka font alag alag change kar sakte ho
+
+Download Updated HTML 
+
 <!DOCTYPE html>
 <html lang="hi">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Live Counter</title>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700;800&family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
+
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
@@ -12,6 +69,10 @@
     background: #080808; color: #fff;
     font-family: 'Inter', sans-serif;
     overflow: hidden; user-select: none;
+    --title-font: 'Oswald', sans-serif;
+    --digit-font: 'Oswald', sans-serif;
+    --title-size: clamp(28px, 5.5vw, 58px);
+    --digit-scale: 1;
   }
   body::before {
     content: ''; position: fixed; inset: 0;
@@ -51,8 +112,8 @@
 
   .title-wrap { margin-bottom: 36px; }
   #titleDisplay {
-    font-family: 'Oswald', sans-serif;
-    font-size: clamp(28px, 5.5vw, 58px);
+    font-family: var(--title-font);
+    font-size: var(--title-size);
     letter-spacing: 1px; font-weight: 600;
     text-transform: none;
     color: rgba(255,255,255,0.82);
@@ -75,16 +136,17 @@
   }
   .digit-strip span {
     display: block;
-    font-family: 'Oswald', sans-serif;
+    font-family: var(--digit-font);
     font-weight: 600;
     color: #fff;
     text-align: center;
     line-height: 1;
     flex-shrink: 0;
+    transform: scale(var(--digit-scale));
   }
 
   .comma {
-    font-family: 'Oswald', sans-serif;
+    font-family: var(--digit-font);
     font-weight: 600;
     color: rgba(255,255,255,0.22);
     line-height: 1;
@@ -127,7 +189,22 @@
     border-radius: 8px; color: #fff; font-size: 14px;
     outline: none; font-family: 'Inter', sans-serif;
   }
+  
   input[type=text]:focus, input[type=number]:focus { border-color: #e03030; }
+
+  .font-select {
+    width: 100%; padding: 7px 10px;
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(255,255,255,0.1);
+    border-radius: 8px; color: #fff; font-size: 14px;
+    outline: none; font-family: 'Inter', sans-serif;
+  }
+
+  .font-select option {
+    background: #151515;
+    color: #fff;
+  }
+
   input[type=range] {
     width: 100%; -webkit-appearance: none; appearance: none;
     height: 3px; border-radius: 2px;
@@ -139,7 +216,8 @@
   }
   .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
   .toggle-row span { font-size: 12px; color: rgba(255,255,255,0.45); }
-  .toggle { position: relative; width: 38px; height: 22px; flex-shrink: 0; }
+  .toggle { position: relative; width: 38px; height: 22px; flex-shrink: 0;
+    transform: scale(var(--digit-scale)); }
   .toggle input { opacity: 0; width: 0; height: 0; }
   .toggle-track { position: absolute; inset: 0; background: rgba(255,255,255,0.1); border-radius: 22px; cursor: pointer; transition: background 0.2s; border: 0.5px solid rgba(255,255,255,0.12); }
   .toggle input:checked + .toggle-track { background: #e03030; }
@@ -183,7 +261,39 @@
   <div class="panel-title">Settings</div>
   <div class="field">
     <label>Title</label>
-    <input type="text" id="titleI" value="Title Here" maxlength="40" spellcheck="false" placeholder="Apna title likho..." />
+    <input type="text" id="titleI" value="Title Here" maxlength="100" spellcheck="false" placeholder="Apna title likho..." />
+  </div>
+
+  <div class="field">
+    <label>Title Font</label>
+    <select id="titleFontI" class="font-select">
+      <option value="'Oswald', sans-serif">Oswald</option>
+      <option value="'Poppins', sans-serif">Poppins</option>
+      <option value="'Montserrat', sans-serif">Montserrat</option>
+      <option value="'Inter', sans-serif">Inter</option>
+      <option value="'Roboto', sans-serif">Roboto</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Digit Font</label>
+    <select id="digitFontI" class="font-select">
+      <option value="'Oswald', sans-serif">Oswald</option>
+      <option value="'Poppins', sans-serif">Poppins</option>
+      <option value="'Montserrat', sans-serif">Montserrat</option>
+      <option value="'Inter', sans-serif">Inter</option>
+      <option value="'Roboto', sans-serif">Roboto</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Title Size <b id="titleSizeD">58px</b></label>
+    <input type="range" id="titleSizeI" min="20" max="120" step="1" value="58" />
+  </div>
+
+  <div class="field">
+    <label>Digit Size <b id="digitSizeD">1x</b></label>
+    <input type="range" id="digitSizeI" min="0.6" max="1.8" step="0.1" value="1" />
   </div>
   <div class="toggle-row">
     <span>LIVE badge dikhao</span>
@@ -217,28 +327,26 @@
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════════════
-//  TRUE ODOMETER SCROLL ENGINE
-//
-//  - Units digit: continuously scrolls smoothly
-//  - Tens digit: STATIONARY at its current digit, only rolls when
-//    units is in the last 20% of its rollover (9 → 0).
-//  - Hundreds digit: STATIONARY, only rolls when tens is rolling.
-//  - And so on for every higher place.
-//
-//  This is exactly how a real mechanical odometer works.
-// ═══════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════
+   SMOOTH ODOMETER ENGINE (from 2nd file, adapted for 1st file UI)
 
-const REPEATS = 30;
-const ROLLOVER_THRESHOLD = 0.8; // higher digits start rolling in last 20%
+   - targetValue  = real count; jumps on every tick
+   - displayValue = shown count; smoothly chases targetValue with RAF
+   - Each digit column has a long 0-9 repeated strip
+   - Digits roll forward like a real odometer
+   ══════════════════════════════════════════════════ */
+
+const REPEATS  = 20;
+const MID_WRAP = 10;
+const EASE     = 0.04;
 
 let cfg = { start: 0, speed: 1000, min: 1, max: 5 };
-let displayValue = 0;
 let targetValue  = 0;
-let ticker = null;
-let rafId  = null;
+let displayValue = 0;
+let ticker       = null;
+let rafId        = null;
+let cols         = [];
 
-let cols = [];
 const wrap = document.getElementById('counterWrap');
 
 function fontSize() {
@@ -246,44 +354,27 @@ function fontSize() {
 }
 function digitW(fs) { return fs * 0.60; }
 
-// Smoothstep easing (s-curve from 0 to 1)
-function smoothstep(t) {
-  t = Math.max(0, Math.min(1, t));
-  return t * t * (3 - 2 * t);
+function currentChars() {
+  return Math.round(Math.max(0, displayValue)).toLocaleString('en-US').split('');
 }
 
-// Compute the visual rotation position of column at given place index.
-// placeIndex 0 = units, 1 = tens, 2 = hundreds, ...
-// Returns a float — integer part = digit, fractional part = how far rolling.
-function displayRotation(val, placeIndex) {
-  const p = Math.pow(10, placeIndex);
-  const raw = val / p;
-
-  // Units: smooth continuous scroll
-  if (placeIndex === 0) return raw;
-
-  // Higher columns: stationary at floor(raw) most of the time,
-  // smoothly transition to floor(raw)+1 only during last 20% of cycle.
-  const base = Math.floor(raw);
-  const frac = raw - base;
-  if (frac < ROLLOVER_THRESHOLD) return base;
-  const t = (frac - ROLLOVER_THRESHOLD) / (1 - ROLLOVER_THRESHOLD);
-  return base + smoothstep(t);
-}
-
-function buildCols(n) {
+/* Build/rebuild digit strips */
+function buildCols() {
   wrap.innerHTML = '';
   cols = [];
+
   const fs = fontSize();
   const dw = digitW(fs);
+  const chars = currentChars();
 
-  for (let i = 0; i < n; i++) {
-    if (i > 0 && (n - i) % 3 === 0) {
+  chars.forEach(ch => {
+    if (ch === ',') {
       const comma = document.createElement('div');
       comma.className = 'comma';
       comma.style.fontSize = (fs * 0.55) + 'px';
       comma.textContent = ',';
       wrap.appendChild(comma);
+      return;
     }
 
     const col = document.createElement('div');
@@ -309,114 +400,95 @@ function buildCols(n) {
     col.appendChild(strip);
     wrap.appendChild(col);
 
-    cols.push({
-      el: col,
-      strip: strip,
-      fs: fs,
-      phase: 0,
-      lastRot: 0,
-    });
-  }
-}
+    const digit = parseInt(ch, 10) || 0;
+    const absIndex = MID_WRAP * 10 + digit;
 
-// Render value statically (initial / resize / column rebuild)
-function renderStatic(val) {
-  const rounded = Math.max(0, Math.round(val));
-  const s = String(rounded);
-  const n = Math.max(s.length, 1);
-  if (n !== cols.length) buildCols(n);
-
-  const midOffset = Math.floor(REPEATS / 2) * 10; // = 150
-
-  cols.forEach((col, i) => {
-    const placeIndex = cols.length - 1 - i;
-    const rot = displayRotation(val, placeIndex);
-    col.lastRot = rot;
-    // Park at mid-strip, offset by current digit
-    col.phase = midOffset + (((rot % 10) + 10) % 10);
-    col.strip.style.transition = 'none';
-    col.strip.style.transform = `translateY(${-(col.phase * col.fs)}px)`;
+    cols.push({ el: col, strip, fs, absIndex });
+    strip.style.transition = 'none';
+    strip.style.transform = `translateY(-${absIndex * fs}px)`;
   });
-
-  displayValue = val;
 }
 
-// Update strip positions for current display value
-function updateStrips(val) {
-  // If number grew in digit count, rebuild
-  const s = String(Math.max(0, Math.round(val)));
-  if (s.length > cols.length) {
-    buildCols(s.length);
-    renderStatic(val);
+/* Move shown value smoothly towards target value */
+function rafLoop() {
+  const diff = targetValue - displayValue;
+
+  if (Math.abs(diff) < 0.01) {
+    displayValue = targetValue;
+    applyDigits(true);
+    rafId = null;
     return;
   }
 
-  cols.forEach((col, i) => {
-    const placeIndex = cols.length - 1 - i;
-    const rot = displayRotation(val, placeIndex);
-    const delta = rot - col.lastRot;
-    col.lastRot = rot;
-    col.phase += delta;
+  displayValue += diff * EASE;
+  applyDigits(false);
+  rafId = requestAnimationFrame(rafLoop);
+}
 
-    // Wrap phase to stay safely in middle of strip
-    // Subtract/add multiple of 10 — visually invisible (digit shown stays same)
-    if (col.phase > (REPEATS - 5) * 10) {
-      col.phase -= Math.floor(REPEATS / 2) * 10;
-    } else if (col.phase < 50) {
-      col.phase += Math.floor(REPEATS / 2) * 10;
+function startRAF() {
+  if (!rafId) rafId = requestAnimationFrame(rafLoop);
+}
+
+/* Apply displayValue to odometer columns */
+function applyDigits(isFinal) {
+  const chars = Math.round(Math.max(0, displayValue)).toLocaleString('en-US').split('');
+  const digitChars = chars.filter(c => c !== ',');
+
+  if (cols.length !== digitChars.length) {
+    buildCols();
+    return;
+  }
+
+  digitChars.forEach((ch, i) => {
+    const target = parseInt(ch, 10) || 0;
+    const col = cols[i];
+    const curVisibleDigit = ((Math.round(col.absIndex) % 10) + 10) % 10;
+
+    let steps = (target - curVisibleDigit + 10) % 10;
+
+    if (steps !== 0 || isFinal) {
+      col.absIndex += steps;
+
+      if (col.absIndex > (REPEATS - 3) * 10) {
+        col.absIndex -= MID_WRAP * 10;
+        col.strip.style.transition = 'none';
+        col.strip.style.transform = `translateY(-${col.absIndex * col.fs}px)`;
+        col.strip.getBoundingClientRect();
+      }
+
+      col.strip.style.transition = `transform 0.55s cubic-bezier(0.25, 1, 0.5, 1)`;
+      col.strip.style.transform = `translateY(-${col.absIndex * col.fs}px)`;
     }
-
-    col.strip.style.transform = `translateY(${-(col.phase * col.fs)}px)`;
   });
 }
 
-// ── Smooth interpolation loop ──
-let lastTs = null;
-function animFrame(ts) {
-  if (lastTs === null) lastTs = ts;
-  const dt = ts - lastTs;
-  lastTs = ts;
-
-  const diff = targetValue - displayValue;
-  if (diff > 0) {
-    // Reach target in ~700ms with min floor for tiny diffs
-    const incPerMs = Math.max(diff / 700, 0.003);
-    displayValue = Math.min(displayValue + incPerMs * dt, targetValue);
-    updateStrips(displayValue);
-  }
-
-  rafId = requestAnimationFrame(animFrame);
-}
-
+/* Live ticker */
 function startCounter() {
   if (ticker) clearInterval(ticker);
+
   ticker = setInterval(() => {
-    const inc = Math.round(cfg.min + Math.random() * (cfg.max - cfg.min));
+    const inc = Math.floor(Math.random() * (cfg.max - cfg.min + 1)) + cfg.min;
     targetValue += inc;
+    startRAF();
   }, cfg.speed);
 }
 
-function startRaf() {
-  if (rafId) cancelAnimationFrame(rafId);
-  lastTs = null;
-  rafId = requestAnimationFrame(animFrame);
-}
-
-function init() {
+function initCounter() {
   if (ticker) clearInterval(ticker);
-  displayValue = cfg.start;
-  targetValue  = cfg.start;
-  renderStatic(cfg.start);
+  if (rafId) cancelAnimationFrame(rafId);
+
+  displayValue = Math.max(0, cfg.start);
+  targetValue  = Math.max(0, cfg.start);
+  rafId = null;
+
+  buildCols();
   startCounter();
-  startRaf();
 }
 
-// Boot
-buildCols(1);
-renderStatic(0);
-startRaf();
+/* Boot */
+buildCols();
 
-// ── Panel ──
+/* ── Panel / Settings from 1st file ── */
 const gearBtn    = document.getElementById('gearBtn');
 const panelEl    = document.getElementById('panel');
 const liveBadge  = document.getElementById('liveBadge');
@@ -429,9 +501,12 @@ gearBtn.addEventListener('click', () => {
   panelEl.classList.toggle('open', pOpen);
   gearBtn.classList.toggle('open', pOpen);
 });
+
 document.addEventListener('click', e => {
   if (pOpen && !panelEl.contains(e.target) && !gearBtn.contains(e.target)) {
-    pOpen = false; panelEl.classList.remove('open'); gearBtn.classList.remove('open');
+    pOpen = false;
+    panelEl.classList.remove('open');
+    gearBtn.classList.remove('open');
   }
 });
 
@@ -439,53 +514,86 @@ liveToggle.addEventListener('change', () => {
   liveBadge.classList.toggle('hidden', !liveToggle.checked);
 });
 
+
+const titleFontI = document.getElementById('titleFontI');
+const digitFontI = document.getElementById('digitFontI');
+const titleSizeI = document.getElementById('titleSizeI');
+const digitSizeI = document.getElementById('digitSizeI');
+
+titleSizeI.addEventListener('input', () => {
+  document.getElementById('titleSizeD').textContent = titleSizeI.value + 'px';
+});
+
+digitSizeI.addEventListener('input', () => {
+  document.getElementById('digitSizeD').textContent = digitSizeI.value + 'x';
+});
+
 const speedI = document.getElementById('speedI');
 const minI   = document.getElementById('minI');
 const maxI   = document.getElementById('maxI');
 const startI = document.getElementById('startI');
-speedI.addEventListener('input', () => { document.getElementById('speedD').textContent = parseFloat(speedI.value).toFixed(1) + 's'; });
+
+speedI.addEventListener('input', () => {
+  document.getElementById('speedD').textContent = parseFloat(speedI.value).toFixed(1) + 's';
+});
+
 minI.addEventListener('input', () => {
   document.getElementById('minD').textContent = minI.value;
-  if (+maxI.value < +minI.value) { maxI.value = minI.value; document.getElementById('maxD').textContent = minI.value; }
+  if (+maxI.value < +minI.value) {
+    maxI.value = minI.value;
+    document.getElementById('maxD').textContent = minI.value;
+  }
 });
+
 maxI.addEventListener('input', () => {
   document.getElementById('maxD').textContent = maxI.value;
-  if (+minI.value > +maxI.value) { minI.value = maxI.value; document.getElementById('minD').textContent = maxI.value; }
+  if (+minI.value > +maxI.value) {
+    minI.value = maxI.value;
+    document.getElementById('minD').textContent = maxI.value;
+  }
 });
-startI.addEventListener('input', () => { document.getElementById('startD').textContent = startI.value; });
+
+startI.addEventListener('input', () => {
+  document.getElementById('startD').textContent = startI.value;
+});
 
 function readSettings() {
   const t = document.getElementById('titleI').value.trim() || 'Title Here';
   titleDisp.textContent = t;
   document.title = t + ' — Live Counter';
+
   liveBadge.classList.toggle('hidden', !liveToggle.checked);
-  cfg.start = parseInt(startI.value) || 0;
-  cfg.speed = Math.round(parseFloat(speedI.value) * 1000);
-  cfg.min   = parseInt(minI.value);
-  cfg.max   = Math.max(parseInt(maxI.value), cfg.min);
-  pOpen = false; panelEl.classList.remove('open'); gearBtn.classList.remove('open');
+
+  cfg.start = Math.max(0, parseInt(startI.value, 10) || 0);
+  cfg.speed = Math.max(100, Math.round(parseFloat(speedI.value) * 1000));
+  cfg.min   = Math.max(1, parseInt(minI.value, 10) || 1);
+  cfg.max   = Math.max(parseInt(maxI.value, 10) || cfg.min, cfg.min);
+
+  pOpen = false;
+  panelEl.classList.remove('open');
+  gearBtn.classList.remove('open');
 }
 
 document.getElementById('applyBtn').addEventListener('click', () => {
   readSettings();
   if (ticker) clearInterval(ticker);
-  targetValue = displayValue;
   startCounter();
 });
 
 document.getElementById('resetBtn').addEventListener('click', () => {
   readSettings();
-  init();
+  initCounter();
 });
 
 window.addEventListener('resize', () => {
-  const n = cols.length;
-  const val = Math.round(displayValue);
-  buildCols(n);
-  renderStatic(val);
-  displayValue = val;
-  targetValue  = val;
+  buildCols();
+  applyDigits(true);
 });
+
+/* Start live count automatically */
+initCounter();
 </script>
 </body>
 </html>
+
+

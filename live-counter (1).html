@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Live Counter</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 100%; height: 100%;
+    background: #080808; color: #fff;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden; user-select: none;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.014) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.014) 1px, transparent 1px);
+    background-size: 64px 64px; pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: ''; position: fixed; top: 40%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 700px; height: 400px;
+    background: radial-gradient(ellipse, rgba(255,50,50,0.07) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .stage {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 1;
+  }
+
+  .live-badge {
+    display: flex; align-items: center; gap: 7px;
+    background: #e03030; color: #fff;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 2.5px; text-transform: uppercase;
+    padding: 5px 13px; border-radius: 4px; margin-bottom: 22px;
+    animation: pulseBadge 2.2s ease-in-out infinite;
+    transition: opacity 0.3s, transform 0.3s;
+  }
+  .live-badge.hidden { opacity: 0; pointer-events: none; transform: scale(0.85); }
+  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: blink 1.3s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+  @keyframes pulseBadge { 0%,100%{box-shadow:0 0 12px rgba(220,50,50,0.3)} 50%{box-shadow:0 0 28px rgba(220,50,50,0.55)} }
+
+  .title-wrap { margin-bottom: 36px; }
+  #titleDisplay {
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(28px, 5.5vw, 58px);
+    letter-spacing: 1px; font-weight: 600;
+    text-transform: none;
+    color: rgba(255,255,255,0.82);
+    line-height: 1; text-align: center;
+  }
+
+  .counter-wrap { display: flex; align-items: center; }
+
+  .digit-col {
+    overflow: hidden;
+    position: relative;
+  }
+  .digit-col::before, .digit-col::after {
+    content: ''; position: absolute; left: 0; right: 0; z-index: 2; pointer-events: none;
+  }
+  .digit-col::before { top: 0; height: 30%; background: linear-gradient(to bottom, #080808 0%, transparent 100%); }
+  .digit-col::after  { bottom: 0; height: 30%; background: linear-gradient(to top,   #080808 0%, transparent 100%); }
+
+  .digit-strip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    will-change: transform;
+  }
+  .digit-strip span {
+    display: block;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    color: #fff;
+    text-align: center;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .comma {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    color: rgba(255,255,255,0.22);
+    line-height: 1;
+    align-self: center;
+    margin: 0 2px;
+    padding-bottom: 4px;
+  }
+
+  .gear-btn {
+    position: fixed; bottom: 24px; right: 24px;
+    width: 42px; height: 42px; border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.4);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 100;
+    transition: background 0.2s, color 0.2s, transform 0.35s;
+  }
+  .gear-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  .gear-btn.open { transform: rotate(60deg); color: #e03030; }
+  .gear-btn svg { width: 19px; height: 19px; }
+
+  .panel {
+    position: fixed; bottom: 76px; right: 24px; width: 300px;
+    background: #151515; border: 0.5px solid rgba(255,255,255,0.09);
+    border-radius: 14px; padding: 18px; z-index: 99;
+    opacity: 0; pointer-events: none;
+    transform: scale(0.9) translateY(10px); transform-origin: bottom right;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .panel.open { opacity: 1; pointer-events: all; transform: scale(1) translateY(0); }
+  .panel-title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 14px; font-weight: 500; }
+  .field { margin-bottom: 12px; }
+  .field label { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: rgba(255,255,255,0.45); margin-bottom: 5px; }
+  .field label b { color: #fff; font-weight: 500; }
+  input[type=text], input[type=number] {
+    width: 100%; padding: 7px 10px;
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(255,255,255,0.1);
+    border-radius: 8px; color: #fff; font-size: 14px;
+    outline: none; font-family: 'Inter', sans-serif;
+  }
+  input[type=text]:focus, input[type=number]:focus { border-color: #e03030; }
+  input[type=range] {
+    width: 100%; -webkit-appearance: none; appearance: none;
+    height: 3px; border-radius: 2px;
+    background: rgba(255,255,255,0.1); outline: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px;
+    border-radius: 50%; background: #e03030; cursor: pointer;
+  }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .toggle-row span { font-size: 12px; color: rgba(255,255,255,0.45); }
+  .toggle { position: relative; width: 38px; height: 22px; flex-shrink: 0; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-track { position: absolute; inset: 0; background: rgba(255,255,255,0.1); border-radius: 22px; cursor: pointer; transition: background 0.2s; border: 0.5px solid rgba(255,255,255,0.12); }
+  .toggle input:checked + .toggle-track { background: #e03030; }
+  .toggle-track::after { content: ''; position: absolute; top: 3px; left: 3px; width: 15px; height: 15px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
+  .toggle input:checked + .toggle-track::after { transform: translateX(16px); }
+  hr { border: none; border-top: 0.5px solid rgba(255,255,255,0.07); margin: 12px 0; }
+  .btn-row { display: flex; gap: 8px; }
+  .apply {
+    flex: 1; padding: 9px; background: #e03030; border: none; border-radius: 8px;
+    color: #fff; font-size: 13px; font-weight: 500; cursor: pointer; letter-spacing: 0.3px;
+    transition: opacity 0.15s;
+  }
+  .apply:hover { opacity: 0.85; }
+  .reset-btn {
+    flex: 1; padding: 9px;
+    background: rgba(255,255,255,0.07);
+    border: 0.5px solid rgba(255,255,255,0.12);
+    border-radius: 8px; color: rgba(255,255,255,0.75);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .reset-btn:hover { background: rgba(255,255,255,0.12); }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="live-badge" id="liveBadge"><div class="live-dot"></div>Live</div>
+  <div class="title-wrap"><div id="titleDisplay">Title Here</div></div>
+  <div class="counter-wrap" id="counterWrap"></div>
+</div>
+
+<button class="gear-btn" id="gearBtn" aria-label="Settings">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+</button>
+
+<div class="panel" id="panel">
+  <div class="panel-title">Settings</div>
+  <div class="field">
+    <label>Title</label>
+    <input type="text" id="titleI" value="Title Here" maxlength="40" spellcheck="false" placeholder="Apna title likho..." />
+  </div>
+  <div class="toggle-row">
+    <span>LIVE badge dikhao</span>
+    <label class="toggle">
+      <input type="checkbox" id="liveToggle" checked />
+      <div class="toggle-track"></div>
+    </label>
+  </div>
+  <hr />
+  <div class="field">
+    <label>Shuru ka number <b id="startD">0</b></label>
+    <input type="number" id="startI" value="0" step="1" />
+  </div>
+  <div class="field">
+    <label>Scroll speed <b id="speedD">1.0s</b></label>
+    <input type="range" id="speedI" min="0.1" max="10" step="0.1" value="1" />
+  </div>
+  <div class="field">
+    <label>Min increment <b id="minD">1</b></label>
+    <input type="range" id="minI" min="1" max="1000" step="1" value="1" />
+  </div>
+  <div class="field">
+    <label>Max increment <b id="maxD">5</b></label>
+    <input type="range" id="maxI" min="1" max="1000" step="1" value="5" />
+  </div>
+  <hr />
+  <div class="btn-row">
+    <button class="apply" id="applyBtn">Apply</button>
+    <button class="reset-btn" id="resetBtn">Reset</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  TRUE ODOMETER SCROLL ENGINE
+//
+//  - Units digit: continuously scrolls smoothly
+//  - Tens digit: STATIONARY at its current digit, only rolls when
+//    units is in the last 20% of its rollover (9 → 0).
+//  - Hundreds digit: STATIONARY, only rolls when tens is rolling.
+//  - And so on for every higher place.
+//
+//  This is exactly how a real mechanical odometer works.
+// ═══════════════════════════════════════════════════════════════
+
+const REPEATS = 30;
+const ROLLOVER_THRESHOLD = 0.8; // higher digits start rolling in last 20%
+
+let cfg = { start: 0, speed: 1000, min: 1, max: 5 };
+let displayValue = 0;
+let targetValue  = 0;
+let ticker = null;
+let rafId  = null;
+
+let cols = [];
+const wrap = document.getElementById('counterWrap');
+
+function fontSize() {
+  return Math.min(Math.max(window.innerWidth * 0.155, 82), 168);
+}
+function digitW(fs) { return fs * 0.60; }
+
+// Smoothstep easing (s-curve from 0 to 1)
+function smoothstep(t) {
+  t = Math.max(0, Math.min(1, t));
+  return t * t * (3 - 2 * t);
+}
+
+// Compute the visual rotation position of column at given place index.
+// placeIndex 0 = units, 1 = tens, 2 = hundreds, ...
+// Returns a float — integer part = digit, fractional part = how far rolling.
+function displayRotation(val, placeIndex) {
+  const p = Math.pow(10, placeIndex);
+  const raw = val / p;
+
+  // Units: smooth continuous scroll
+  if (placeIndex === 0) return raw;
+
+  // Higher columns: stationary at floor(raw) most of the time,
+  // smoothly transition to floor(raw)+1 only during last 20% of cycle.
+  const base = Math.floor(raw);
+  const frac = raw - base;
+  if (frac < ROLLOVER_THRESHOLD) return base;
+  const t = (frac - ROLLOVER_THRESHOLD) / (1 - ROLLOVER_THRESHOLD);
+  return base + smoothstep(t);
+}
+
+function buildCols(n) {
+  wrap.innerHTML = '';
+  cols = [];
+  const fs = fontSize();
+  const dw = digitW(fs);
+
+  for (let i = 0; i < n; i++) {
+    if (i > 0 && (n - i) % 3 === 0) {
+      const comma = document.createElement('div');
+      comma.className = 'comma';
+      comma.style.fontSize = (fs * 0.55) + 'px';
+      comma.textContent = ',';
+      wrap.appendChild(comma);
+    }
+
+    const col = document.createElement('div');
+    col.className = 'digit-col';
+    col.style.width  = dw + 'px';
+    col.style.height = fs + 'px';
+
+    const strip = document.createElement('div');
+    strip.className = 'digit-strip';
+    strip.style.width = dw + 'px';
+
+    for (let r = 0; r < REPEATS; r++) {
+      for (let d = 0; d <= 9; d++) {
+        const s = document.createElement('span');
+        s.textContent = String(d);
+        s.style.width    = dw + 'px';
+        s.style.height   = fs + 'px';
+        s.style.fontSize = fs + 'px';
+        strip.appendChild(s);
+      }
+    }
+
+    col.appendChild(strip);
+    wrap.appendChild(col);
+
+    cols.push({
+      el: col,
+      strip: strip,
+      fs: fs,
+      phase: 0,
+      lastRot: 0,
+    });
+  }
+}
+
+// Render value statically (initial / resize / column rebuild)
+function renderStatic(val) {
+  const rounded = Math.max(0, Math.round(val));
+  const s = String(rounded);
+  const n = Math.max(s.length, 1);
+  if (n !== cols.length) buildCols(n);
+
+  const midOffset = Math.floor(REPEATS / 2) * 10; // = 150
+
+  cols.forEach((col, i) => {
+    const placeIndex = cols.length - 1 - i;
+    const rot = displayRotation(val, placeIndex);
+    col.lastRot = rot;
+    // Park at mid-strip, offset by current digit
+    col.phase = midOffset + (((rot % 10) + 10) % 10);
+    col.strip.style.transition = 'none';
+    col.strip.style.transform = `translateY(${-(col.phase * col.fs)}px)`;
+  });
+
+  displayValue = val;
+}
+
+// Update strip positions for current display value
+function updateStrips(val) {
+  // If number grew in digit count, rebuild
+  const s = String(Math.max(0, Math.round(val)));
+  if (s.length > cols.length) {
+    buildCols(s.length);
+    renderStatic(val);
+    return;
+  }
+
+  cols.forEach((col, i) => {
+    const placeIndex = cols.length - 1 - i;
+    const rot = displayRotation(val, placeIndex);
+    const delta = rot - col.lastRot;
+    col.lastRot = rot;
+    col.phase += delta;
+
+    // Wrap phase to stay safely in middle of strip
+    // Subtract/add multiple of 10 — visually invisible (digit shown stays same)
+    if (col.phase > (REPEATS - 5) * 10) {
+      col.phase -= Math.floor(REPEATS / 2) * 10;
+    } else if (col.phase < 50) {
+      col.phase += Math.floor(REPEATS / 2) * 10;
+    }
+
+    col.strip.style.transform = `translateY(${-(col.phase * col.fs)}px)`;
+  });
+}
+
+// ── Smooth interpolation loop ──
+let lastTs = null;
+function animFrame(ts) {
+  if (lastTs === null) lastTs = ts;
+  const dt = ts - lastTs;
+  lastTs = ts;
+
+  const diff = targetValue - displayValue;
+  if (diff > 0) {
+    // Reach target in ~700ms with min floor for tiny diffs
+    const incPerMs = Math.max(diff / 700, 0.003);
+    displayValue = Math.min(displayValue + incPerMs * dt, targetValue);
+    updateStrips(displayValue);
+  }
+
+  rafId = requestAnimationFrame(animFrame);
+}
+
+function startCounter() {
+  if (ticker) clearInterval(ticker);
+  ticker = setInterval(() => {
+    const inc = Math.round(cfg.min + Math.random() * (cfg.max - cfg.min));
+    targetValue += inc;
+  }, cfg.speed);
+}
+
+function startRaf() {
+  if (rafId) cancelAnimationFrame(rafId);
+  lastTs = null;
+  rafId = requestAnimationFrame(animFrame);
+}
+
+function init() {
+  if (ticker) clearInterval(ticker);
+  displayValue = cfg.start;
+  targetValue  = cfg.start;
+  renderStatic(cfg.start);
+  startCounter();
+  startRaf();
+}
+
+// Boot
+buildCols(1);
+renderStatic(0);
+startRaf();
+
+// ── Panel ──
+const gearBtn    = document.getElementById('gearBtn');
+const panelEl    = document.getElementById('panel');
+const liveBadge  = document.getElementById('liveBadge');
+const titleDisp  = document.getElementById('titleDisplay');
+const liveToggle = document.getElementById('liveToggle');
+let pOpen = false;
+
+gearBtn.addEventListener('click', () => {
+  pOpen = !pOpen;
+  panelEl.classList.toggle('open', pOpen);
+  gearBtn.classList.toggle('open', pOpen);
+});
+document.addEventListener('click', e => {
+  if (pOpen && !panelEl.contains(e.target) && !gearBtn.contains(e.target)) {
+    pOpen = false; panelEl.classList.remove('open'); gearBtn.classList.remove('open');
+  }
+});
+
+liveToggle.addEventListener('change', () => {
+  liveBadge.classList.toggle('hidden', !liveToggle.checked);
+});
+
+const speedI = document.getElementById('speedI');
+const minI   = document.getElementById('minI');
+const maxI   = document.getElementById('maxI');
+const startI = document.getElementById('startI');
+speedI.addEventListener('input', () => { document.getElementById('speedD').textContent = parseFloat(speedI.value).toFixed(1) + 's'; });
+minI.addEventListener('input', () => {
+  document.getElementById('minD').textContent = minI.value;
+  if (+maxI.value < +minI.value) { maxI.value = minI.value; document.getElementById('maxD').textContent = minI.value; }
+});
+maxI.addEventListener('input', () => {
+  document.getElementById('maxD').textContent = maxI.value;
+  if (+minI.value > +maxI.value) { minI.value = maxI.value; document.getElementById('minD').textContent = maxI.value; }
+});
+startI.addEventListener('input', () => { document.getElementById('startD').textContent = startI.value; });
+
+function readSettings() {
+  const t = document.getElementById('titleI').value.trim() || 'Title Here';
+  titleDisp.textContent = t;
+  document.title = t + ' — Live Counter';
+  liveBadge.classList.toggle('hidden', !liveToggle.checked);
+  cfg.start = parseInt(startI.value) || 0;
+  cfg.speed = Math.round(parseFloat(speedI.value) * 1000);
+  cfg.min   = parseInt(minI.value);
+  cfg.max   = Math.max(parseInt(maxI.value), cfg.min);
+  pOpen = false; panelEl.classList.remove('open'); gearBtn.classList.remove('open');
+}
+
+document.getElementById('applyBtn').addEventListener('click', () => {
+  readSettings();
+  if (ticker) clearInterval(ticker);
+  targetValue = displayValue;
+  startCounter();
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  readSettings();
+  init();
+});
+
+window.addEventListener('resize', () => {
+  const n = cols.length;
+  const val = Math.round(displayValue);
+  buildCols(n);
+  renderStatic(val);
+  displayValue = val;
+  targetValue  = val;
+});
+</script>
+</body>
+</html>

@@ -13,25 +13,9 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
     width: 100%; height: 100%;
-    background: var(--page-bg); color: var(--text-main);
+    background: #080808; color: #fff;
     font-family: 'Inter', sans-serif;
     overflow: hidden; user-select: none;
-    --title-font: 'Oswald', sans-serif;
-    --digit-font: 'Oswald', sans-serif;
-    --title-size: 58px;
-    --digit-scale: 1;
-    --title-color: var(--title-color);
-    --digit-color: #ffffff;
-    --comma-color: var(--comma-color);
-    --live-scale: 1;
-    --page-bg: #080808;
-    --panel-bg: #151515;
-    --field-bg: rgba(255,255,255,0.05);
-    --field-border: rgba(255,255,255,0.1);
-    --text-main: #ffffff;
-    --text-muted: rgba(255,255,255,0.45);
-    --grid-opacity: 1;
-    --bg-image: none;
     --title-font: 'Oswald', sans-serif;
     --digit-font: 'Oswald', sans-serif;
     --title-size: clamp(28px, 5.5vw, 58px);
@@ -41,36 +25,8 @@
     content: ''; position: fixed; inset: 0;
     background-image:
       linear-gradient(rgba(255,255,255,0.014) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.014) 1px, transparent 1px),
-      var(--bg-image);
-    background-size: 64px 64px, 64px 64px, cover;
-    background-position: center, center, center;
-    background-repeat: repeat, repeat, no-repeat;
-    opacity: var(--grid-opacity);
-    pointer-events: none; z-index: 0;
-  }
-  body.has-bg::before {
-    background-image: var(--bg-image);
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    opacity: 1;
-  }
-  body.has-bg::after {
-    background: rgba(0,0,0,0.35);
-    width: 100%; height: 100%; top: 50%;
-  }
-  body.light-mode {
-    --page-bg: #f7f7f7;
-    --panel-bg: #ffffff;
-    --field-bg: rgba(0,0,0,0.04);
-    --field-border: rgba(0,0,0,0.12);
-    --text-main: #111111;
-    --text-muted: rgba(0,0,0,0.55);
-    --title-color: #111111;
-    --digit-color: #111111;
-    --comma-color: rgba(0,0,0,0.28);
-    --grid-opacity: 0.6;
+      linear-gradient(90deg, rgba(255,255,255,0.014) 1px, transparent 1px);
+    background-size: 64px 64px; pointer-events: none; z-index: 0;
   }
   body::after {
     content: ''; position: fixed; top: 40%; left: 50%;
@@ -93,12 +49,10 @@
     font-size: 11px; font-weight: 500;
     letter-spacing: 2.5px; text-transform: uppercase;
     padding: 5px 13px; border-radius: 4px; margin-bottom: 22px;
-    transform: scale(var(--live-scale));
-    transform-origin: center;
     animation: pulseBadge 2.2s ease-in-out infinite;
     transition: opacity 0.3s, transform 0.3s;
   }
-  .live-badge.hidden { opacity: 0; pointer-events: none; transform: scale(calc(var(--live-scale) * 0.85)); }
+  .live-badge.hidden { opacity: 0; pointer-events: none; transform: scale(0.85); }
   .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: blink 1.3s ease-in-out infinite; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
   @keyframes pulseBadge { 0%,100%{box-shadow:0 0 12px rgba(220,50,50,0.3)} 50%{box-shadow:0 0 28px rgba(220,50,50,0.55)} }
@@ -109,7 +63,7 @@
     font-size: var(--title-size);
     letter-spacing: 1px; font-weight: 600;
     text-transform: none;
-    color: var(--title-color);
+    color: rgba(255,255,255,0.82);
     line-height: 1; text-align: center;
   }
 
@@ -131,7 +85,7 @@
     display: block;
     font-family: var(--digit-font);
     font-weight: 600;
-    color: var(--digit-color);
+    color: #fff;
     text-align: center;
     line-height: 1;
     flex-shrink: 0;
@@ -140,7 +94,7 @@
   .comma {
     font-family: var(--digit-font);
     font-weight: 600;
-    color: var(--comma-color);
+    color: rgba(255,255,255,0.22);
     line-height: 1;
     align-self: center;
     margin: 0 2px;
@@ -148,10 +102,10 @@
   }
 
   .gear-btn {
-    position: fixed; bottom: 18px; right: 18px;
+    position: fixed; bottom: 24px; right: 24px;
     width: 42px; height: 42px; border-radius: 50%;
-    background: var(--field-bg);
-    border: 0.5px solid var(--field-border);
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(255,255,255,0.1);
     color: rgba(255,255,255,0.4);
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; z-index: 100;
@@ -162,52 +116,22 @@
   .gear-btn svg { width: 19px; height: 19px; }
 
   .panel {
-    position: fixed;
-    top: 16px;
-    right: 16px;
-    width: 320px;
-    max-height: calc(100vh - 32px);
-    overflow-y: auto;
-    overflow-x: hidden;
-    background: var(--panel-bg);
-    border: 0.5px solid rgba(255,255,255,0.09);
-    border-radius: 14px;
-    padding: 18px;
-    z-index: 99;
-    opacity: 0;
-    pointer-events: none;
-    transform: scale(0.96) translateY(10px);
-    transform-origin: top right;
+    position: fixed; bottom: 76px; right: 24px; width: 300px;
+    background: #151515; border: 0.5px solid rgba(255,255,255,0.09);
+    border-radius: 14px; padding: 18px; z-index: 99;
+    opacity: 0; pointer-events: none;
+    transform: scale(0.9) translateY(10px); transform-origin: bottom right;
     transition: opacity 0.2s, transform 0.2s;
-    scrollbar-width: thin;
-  }
-
-  .panel::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .panel::-webkit-scrollbar-track {
-    background: rgba(255,255,255,0.04);
-    border-radius: 10px;
-  }
-
-  .panel::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.18);
-    border-radius: 10px;
-  }
-
-  .panel::-webkit-scrollbar-thumb:hover {
-    background: rgba(255,255,255,0.28);
   }
   .panel.open { opacity: 1; pointer-events: all; transform: scale(1) translateY(0); }
   .panel-title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 14px; font-weight: 500; }
   .field { margin-bottom: 12px; }
-  .field label { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-muted); margin-bottom: 5px; }
-  .field label b { color: var(--text-main); font-weight: 500; }
+  .field label { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: rgba(255,255,255,0.45); margin-bottom: 5px; }
+  .field label b { color: #fff; font-weight: 500; }
   input[type=text], input[type=number] {
     width: 100%; padding: 7px 10px;
-    background: var(--field-bg);
-    border: 0.5px solid var(--field-border);
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(255,255,255,0.1);
     border-radius: 8px; color: #fff; font-size: 14px;
     outline: none; font-family: 'Inter', sans-serif;
   }
@@ -216,14 +140,14 @@
 
   .font-select {
     width: 100%; padding: 7px 10px;
-    background: var(--field-bg);
-    border: 0.5px solid var(--field-border);
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(255,255,255,0.1);
     border-radius: 8px; color: #fff; font-size: 14px;
     outline: none; font-family: 'Inter', sans-serif;
   }
 
   .font-select option {
-    background: var(--panel-bg);
+    background: #151515;
     color: #fff;
   }
 
@@ -237,7 +161,7 @@
     border-radius: 50%; background: #e03030; cursor: pointer;
   }
   .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-  .toggle-row span { font-size: 12px; color: var(--text-muted); }
+  .toggle-row span { font-size: 12px; color: rgba(255,255,255,0.45); }
   .toggle { position: relative; width: 38px; height: 22px; flex-shrink: 0; }
   .toggle input { opacity: 0; width: 0; height: 0; }
   .toggle-track { position: absolute; inset: 0; background: rgba(255,255,255,0.1); border-radius: 22px; cursor: pointer; transition: background 0.2s; border: 0.5px solid rgba(255,255,255,0.12); }
@@ -261,41 +185,6 @@
     transition: background 0.15s;
   }
   .reset-btn:hover { background: rgba(255,255,255,0.12); }
-
-  input[type=color] {
-    width: 100%; height: 34px;
-    background: var(--field-bg);
-    border: 0.5px solid var(--field-border);
-    border-radius: 8px; padding: 4px;
-    cursor: pointer;
-  }
-  input[type=file] {
-    width: 100%;
-    color: var(--text-muted);
-    font-size: 12px;
-  }
-  .small-btn {
-    width: 100%; padding: 9px;
-    background: rgba(255,255,255,0.07);
-    border: 0.5px solid var(--field-border);
-    border-radius: 8px; color: var(--text-main);
-    font-size: 13px; font-weight: 500; cursor: pointer;
-  }
-  .small-btn:hover { opacity: 0.85; }
-  body.light-mode .gear-btn { color: rgba(0,0,0,0.45); background: rgba(0,0,0,0.05); }
-  body.light-mode .reset-btn, body.light-mode .small-btn { background: rgba(0,0,0,0.06); }
-
-
-  @media (max-width: 768px) {
-    .panel {
-      width: calc(100vw - 20px);
-      right: 10px;
-      top: 10px;
-      max-height: calc(100vh - 20px);
-      padding: 14px;
-    }
-  }
-
 </style>
 </head>
 <body>
@@ -355,39 +244,6 @@
     <label>Digit Size <b id="digitSizeD">1x</b></label>
     <input type="range" id="digitSizeI" min="0.5" max="2.2" step="0.1" value="1" />
   </div>
-
-  <div class="field">
-    <label>LIVE Badge Size <b id="liveSizeD">1x</b></label>
-    <input type="range" id="liveSizeI" min="0.6" max="2" step="0.1" value="1" />
-  </div>
-
-  <div class="field">
-    <label>Title Color</label>
-    <input type="color" id="titleColorI" value="#ffffff" />
-  </div>
-
-  <div class="field">
-    <label>Number Color</label>
-    <input type="color" id="digitColorI" value="#ffffff" />
-  </div>
-
-  <div class="field">
-    <label>Background Image</label>
-    <input type="file" id="bgImageI" accept="image/*" />
-  </div>
-
-  <div class="toggle-row">
-    <span>Light mode</span>
-    <label class="toggle">
-      <input type="checkbox" id="modeToggle" />
-      <div class="toggle-track"></div>
-    </label>
-  </div>
-
-  <div class="field">
-    <button class="small-btn" id="clearBgBtn" type="button">Remove BG Image</button>
-  </div>
-
   <div class="toggle-row">
     <span>LIVE badge dikhao</span>
     <label class="toggle">
@@ -415,7 +271,7 @@
   <hr />
   <div class="btn-row">
     <button class="apply" id="applyBtn">Apply</button>
-    <button class="reset-btn" id="resetBtn">Default</button>
+    <button class="reset-btn" id="resetBtn">Reset</button>
   </div>
 </div>
 
@@ -612,122 +468,6 @@ liveToggle.addEventListener('change', () => {
 
 
 const titleFontI = document.getElementById('titleFontI');
-
-const liveSizeI = document.getElementById('liveSizeI');
-const titleColorI = document.getElementById('titleColorI');
-const digitColorI = document.getElementById('digitColorI');
-const bgImageI = document.getElementById('bgImageI');
-const modeToggle = document.getElementById('modeToggle');
-const clearBgBtn = document.getElementById('clearBgBtn');
-const STORAGE_KEY = 'rr_live_counter_settings_v2';
-
-function setVar(name, value) {
-  document.body.style.setProperty(name, value);
-}
-
-function currentSettings() {
-  return {
-    title: document.getElementById('titleI').value,
-    titleFont: titleFontI.value,
-    digitFont: digitFontI.value,
-    titleSize: titleSizeI.value,
-    digitSize: digitSizeI.value,
-    liveSize: liveSizeI.value,
-    titleColor: titleColorI.value,
-    digitColor: digitColorI.value,
-    lightMode: modeToggle.checked,
-    bgImage: localStorage.getItem(STORAGE_KEY + '_bg') || ''
-  };
-}
-
-function saveSettings() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(currentSettings()));
-}
-
-function applyVisualSettings(save = true) {
-  titleDisp.textContent = document.getElementById('titleI').value.trim() || 'Title Here';
-  document.title = titleDisp.textContent + ' — Live Counter';
-
-  setVar('--title-font', titleFontI.value);
-  setVar('--digit-font', digitFontI.value);
-  setVar('--title-size', titleSizeI.value + 'px');
-  setVar('--digit-scale', digitSizeI.value);
-  setVar('--live-scale', liveSizeI.value);
-  setVar('--title-color', titleColorI.value);
-  setVar('--digit-color', digitColorI.value);
-  setVar('--comma-color', digitColorI.value + '55');
-
-  document.getElementById('titleSizeD').textContent = titleSizeI.value + 'px';
-  document.getElementById('digitSizeD').textContent = digitSizeI.value + 'x';
-  document.getElementById('liveSizeD').textContent = liveSizeI.value + 'x';
-
-  document.body.classList.toggle('light-mode', modeToggle.checked);
-
-  const bg = localStorage.getItem(STORAGE_KEY + '_bg');
-  if (bg) {
-    setVar('--bg-image', `url("${bg}")`);
-    document.body.classList.add('has-bg');
-  } else {
-    setVar('--bg-image', 'none');
-    document.body.classList.remove('has-bg');
-  }
-
-  if (save) saveSettings();
-
-  const keepValue = Math.round(displayValue || cfg.start || 0);
-  buildCols(cols.length || 1);
-  renderStatic(keepValue);
-}
-
-function loadSettings() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const s = JSON.parse(raw);
-
-    if (s.title) document.getElementById('titleI').value = s.title;
-    if (s.titleFont) titleFontI.value = s.titleFont;
-    if (s.digitFont) digitFontI.value = s.digitFont;
-    if (s.titleSize) titleSizeI.value = s.titleSize;
-    if (s.digitSize) digitSizeI.value = s.digitSize;
-    if (s.liveSize) liveSizeI.value = s.liveSize;
-    if (s.titleColor) titleColorI.value = s.titleColor;
-    if (s.digitColor) digitColorI.value = s.digitColor;
-    modeToggle.checked = !!s.lightMode;
-
-    applyVisualSettings(false);
-  } catch (e) {}
-}
-
-function defaultSettings() {
-  localStorage.removeItem(STORAGE_KEY);
-  localStorage.removeItem(STORAGE_KEY + '_bg');
-
-  document.getElementById('titleI').value = 'Title Here';
-  titleFontI.value = "'Oswald', sans-serif";
-  digitFontI.value = "'Oswald', sans-serif";
-  titleSizeI.value = 58;
-  digitSizeI.value = 1;
-  liveSizeI.value = 1;
-  titleColorI.value = '#ffffff';
-  digitColorI.value = '#ffffff';
-  modeToggle.checked = false;
-
-  applyVisualSettings(false);
-  cfg = { start: 0, speed: 1000, min: 1, max: 5 };
-  document.getElementById('startI').value = 0;
-  document.getElementById('speedI').value = 1;
-  document.getElementById('minI').value = 1;
-  document.getElementById('maxI').value = 5;
-  document.getElementById('startD').textContent = 0;
-  document.getElementById('speedD').textContent = '1.0s';
-  document.getElementById('minD').textContent = 1;
-  document.getElementById('maxD').textContent = 5;
-  init();
-  saveSettings();
-}
-
-
 const digitFontI = document.getElementById('digitFontI');
 const titleSizeI = document.getElementById('titleSizeI');
 const digitSizeI = document.getElementById('digitSizeI');
@@ -803,15 +543,19 @@ function readSettings() {
   const t = document.getElementById('titleI').value.trim() || 'Title Here';
   titleDisp.textContent = t;
   document.title = t + ' — Live Counter';
+
   liveBadge.classList.toggle('hidden', !liveToggle.checked);
-  cfg.start = parseInt(startI.value) || 0;
-  cfg.speed = Math.round(parseFloat(speedI.value) * 1000);
-  cfg.min   = parseInt(minI.value);
-  cfg.max   = Math.max(parseInt(maxI.value), cfg.min);
 
-  applyVisualSettings(true);
+  cfg.start = Math.max(0, parseInt(startI.value, 10) || 0);
+  cfg.speed = Math.max(100, Math.round(parseFloat(speedI.value) * 1000));
+  cfg.min   = Math.max(1, parseInt(minI.value, 10) || 1);
+  cfg.max   = Math.max(parseInt(maxI.value, 10) || cfg.min, cfg.min);
 
-  pOpen = false; panelEl.classList.remove('open'); gearBtn.classList.remove('open');
+  applyFontAndSizeSettings({ rebuildDigits: true });
+
+  pOpen = false;
+  panelEl.classList.remove('open');
+  gearBtn.classList.remove('open');
 }
 
 document.getElementById('applyBtn').addEventListener('click', () => {

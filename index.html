@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Live Counter</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700;800&family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&family=Oswald:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&family=Roboto:wght@300;400;500;700;900&family=Raleway:wght@300;400;500;600;700;800;900&family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
 
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -17,7 +19,7 @@
     --title-font: 'Oswald', sans-serif;
     --digit-font: 'Oswald', sans-serif;
     --title-size: clamp(28px, 5.5vw, 58px);
-    --digit-scale: 1;
+    --digit-size-mult: 1;
   }
   body::before {
     content: ''; position: fixed; inset: 0;
@@ -87,7 +89,6 @@
     text-align: center;
     line-height: 1;
     flex-shrink: 0;
-    transform: scale(var(--digit-scale));
   }
 
   .comma {
@@ -161,8 +162,7 @@
   }
   .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
   .toggle-row span { font-size: 12px; color: rgba(255,255,255,0.45); }
-  .toggle { position: relative; width: 38px; height: 22px; flex-shrink: 0;
-    transform: scale(var(--digit-scale)); }
+  .toggle { position: relative; width: 38px; height: 22px; flex-shrink: 0; }
   .toggle input { opacity: 0; width: 0; height: 0; }
   .toggle-track { position: absolute; inset: 0; background: rgba(255,255,255,0.1); border-radius: 22px; cursor: pointer; transition: background 0.2s; border: 0.5px solid rgba(255,255,255,0.12); }
   .toggle input:checked + .toggle-track { background: #e03030; }
@@ -217,6 +217,8 @@
       <option value="'Montserrat', sans-serif">Montserrat</option>
       <option value="'Inter', sans-serif">Inter</option>
       <option value="'Roboto', sans-serif">Roboto</option>
+      <option value="'Raleway', sans-serif">Raleway</option>
+      <option value="'Lato', sans-serif">Lato</option>
     </select>
   </div>
 
@@ -228,6 +230,8 @@
       <option value="'Montserrat', sans-serif">Montserrat</option>
       <option value="'Inter', sans-serif">Inter</option>
       <option value="'Roboto', sans-serif">Roboto</option>
+      <option value="'Raleway', sans-serif">Raleway</option>
+      <option value="'Lato', sans-serif">Lato</option>
     </select>
   </div>
 
@@ -238,7 +242,7 @@
 
   <div class="field">
     <label>Digit Size <b id="digitSizeD">1x</b></label>
-    <input type="range" id="digitSizeI" min="0.6" max="1.8" step="0.1" value="1" />
+    <input type="range" id="digitSizeI" min="0.5" max="2.2" step="0.1" value="1" />
   </div>
   <div class="toggle-row">
     <span>LIVE badge dikhao</span>
@@ -295,7 +299,10 @@ let cols         = [];
 const wrap = document.getElementById('counterWrap');
 
 function fontSize() {
-  return Math.min(Math.max(window.innerWidth * 0.155, 82), 168);
+  const sizeControl = document.getElementById('digitSizeI');
+  const mult = sizeControl ? (parseFloat(sizeControl.value) || 1) : 1;
+  const base = Math.min(Math.max(window.innerWidth * 0.155, 82), 168);
+  return base * mult;
 }
 function digitW(fs) { return fs * 0.60; }
 
@@ -465,13 +472,43 @@ const digitFontI = document.getElementById('digitFontI');
 const titleSizeI = document.getElementById('titleSizeI');
 const digitSizeI = document.getElementById('digitSizeI');
 
-titleSizeI.addEventListener('input', () => {
-  document.getElementById('titleSizeD').textContent = titleSizeI.value + 'px';
-});
+function applyFontAndSizeSettings({ rebuildDigits = false } = {}) {
+  document.body.style.setProperty('--title-font', titleFontI.value);
+  document.body.style.setProperty('--digit-font', digitFontI.value);
+  document.body.style.setProperty('--title-size', titleSizeI.value + 'px');
+  document.body.style.setProperty('--digit-size-mult', digitSizeI.value);
 
-digitSizeI.addEventListener('input', () => {
+  document.getElementById('titleSizeD').textContent = titleSizeI.value + 'px';
   document.getElementById('digitSizeD').textContent = digitSizeI.value + 'x';
-});
+
+  localStorage.setItem('liveCounterFonts', JSON.stringify({
+    titleFont: titleFontI.value,
+    digitFont: digitFontI.value,
+    titleSize: titleSizeI.value,
+    digitSize: digitSizeI.value
+  }));
+
+  if (rebuildDigits) {
+    buildCols();
+    applyDigits(true);
+  }
+}
+
+function loadSavedFontSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('liveCounterFonts') || '{}');
+    if (saved.titleFont) titleFontI.value = saved.titleFont;
+    if (saved.digitFont) digitFontI.value = saved.digitFont;
+    if (saved.titleSize) titleSizeI.value = saved.titleSize;
+    if (saved.digitSize) digitSizeI.value = saved.digitSize;
+  } catch (e) {}
+  applyFontAndSizeSettings({ rebuildDigits: true });
+}
+
+titleFontI.addEventListener('change', () => applyFontAndSizeSettings());
+digitFontI.addEventListener('change', () => applyFontAndSizeSettings({ rebuildDigits: true }));
+titleSizeI.addEventListener('input', () => applyFontAndSizeSettings());
+digitSizeI.addEventListener('input', () => applyFontAndSizeSettings({ rebuildDigits: true }));
 
 const speedI = document.getElementById('speedI');
 const minI   = document.getElementById('minI');
@@ -514,6 +551,8 @@ function readSettings() {
   cfg.min   = Math.max(1, parseInt(minI.value, 10) || 1);
   cfg.max   = Math.max(parseInt(maxI.value, 10) || cfg.min, cfg.min);
 
+  applyFontAndSizeSettings({ rebuildDigits: true });
+
   pOpen = false;
   panelEl.classList.remove('open');
   gearBtn.classList.remove('open');
@@ -536,9 +575,9 @@ window.addEventListener('resize', () => {
 });
 
 /* Start live count automatically */
+loadSavedFontSettings();
+readSettings();
 initCounter();
 </script>
 </body>
 </html>
-
-

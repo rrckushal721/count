@@ -69,6 +69,14 @@
 
   .counter-wrap { display: flex; align-items: center; }
 
+  .stage.title-bottom .live-badge { order: 1; }
+  .stage.title-bottom .counter-wrap { order: 2; }
+  .stage.title-bottom .title-wrap { order: 3; margin-bottom: 0; margin-top: 36px; }
+
+  .stage.title-top .live-badge { order: 1; }
+  .stage.title-top .title-wrap { order: 2; }
+  .stage.title-top .counter-wrap { order: 3; }
+
   .digit-col {
     overflow: hidden;
     position: relative;
@@ -189,7 +197,7 @@
 </head>
 <body>
 
-<div class="stage">
+<div class="stage title-top" id="stage">
   <div class="live-badge" id="liveBadge"><div class="live-dot"></div>Live</div>
   <div class="title-wrap"><div id="titleDisplay">Title Here</div></div>
   <div class="counter-wrap" id="counterWrap"></div>
@@ -208,6 +216,15 @@
     <label>Title</label>
     <input type="text" id="titleI" value="Title Here" maxlength="100" spellcheck="false" placeholder="Apna title likho..." />
   </div>
+
+  <div class="field">
+    <label>Title Position</label>
+    <select id="titlePosI" class="font-select">
+      <option value="top" selected>Numbers ke upar</option>
+      <option value="bottom">Numbers ke niche</option>
+    </select>
+  </div>
+
 
   <div class="field">
     <label>Title Font</label>
@@ -445,6 +462,8 @@ const gearBtn    = document.getElementById('gearBtn');
 const panelEl    = document.getElementById('panel');
 const liveBadge  = document.getElementById('liveBadge');
 const titleDisp  = document.getElementById('titleDisplay');
+const stageEl    = document.getElementById('stage');
+const titlePosI  = document.getElementById('titlePosI');
 const liveToggle = document.getElementById('liveToggle');
 let pOpen = false;
 
@@ -539,12 +558,28 @@ startI.addEventListener('input', () => {
   document.getElementById('startD').textContent = startI.value;
 });
 
+
+function applyTitlePosition() {
+  const pos = titlePosI ? titlePosI.value : 'top';
+  stageEl.classList.toggle('title-bottom', pos === 'bottom');
+  stageEl.classList.toggle('title-top', pos !== 'bottom');
+  try { localStorage.setItem('titlePosition', pos); } catch(e) {}
+}
+
+if (titlePosI) {
+  const savedTitlePos = localStorage.getItem('titlePosition');
+  if (savedTitlePos) titlePosI.value = savedTitlePos;
+  titlePosI.addEventListener('change', applyTitlePosition);
+  applyTitlePosition();
+}
+
 function readSettings() {
   const t = document.getElementById('titleI').value.trim() || 'Title Here';
   titleDisp.textContent = t;
   document.title = t + ' — Live Counter';
 
   liveBadge.classList.toggle('hidden', !liveToggle.checked);
+  applyTitlePosition();
 
   cfg.start = Math.max(0, parseInt(startI.value, 10) || 0);
   cfg.speed = Math.max(100, Math.round(parseFloat(speedI.value) * 1000));
